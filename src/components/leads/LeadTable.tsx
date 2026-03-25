@@ -11,10 +11,15 @@ const STATUS_COLORS: Record<Lead["status"], string> = {
   Lost: "border-slate-500/30 bg-slate-500/10 text-slate-400",
 };
 
-export function LeadTable() {
-  const { leads, deleteLead } = useLeads();
+interface LeadTableProps {
+  displayLeads?: Lead[];
+}
 
-  if (leads.length === 0) {
+export function LeadTable({ displayLeads }: LeadTableProps) {
+  const { leads, deleteLead } = useLeads();
+  const listToRender = displayLeads ?? leads;
+
+  if (listToRender.length === 0) {
     return (
       <div className="flex min-h-[400px] flex-col items-center justify-center space-y-4 rounded-[30px] border border-dashed border-white/10 bg-white/5 text-center p-8">
         <div className="h-20 w-20 rounded-full border border-white/10 bg-white/5 flex items-center justify-center">
@@ -46,7 +51,7 @@ export function LeadTable() {
           </tr>
         </thead>
         <tbody className="divide-y divide-white/5">
-          {leads.map((lead) => (
+          {listToRender.map((lead) => (
             <tr key={lead.id} className="group transition hover:bg-white/5">
               <td className="px-6 py-4">
                 <div className="flex items-center gap-3">
