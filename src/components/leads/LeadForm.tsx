@@ -2,6 +2,7 @@
 
 import { ChangeEvent, FormEvent, useMemo, useState } from "react";
 import { LeadFormValues } from "@/types/lead";
+import { useLeads } from "@/contexts/LeadContext";
 
 const AGE_GROUPS = ["Kids", "Teen", "18+"] as const;
 const PROGRAMS = ["Scratch", "Web Development", "Data Analytics", "AI/ML", "Robotics"];
@@ -20,14 +21,17 @@ const initialValues: LeadFormValues = {
 };
 
 export function LeadForm() {
+  const { addLead } = useLeads();
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showSuccess, setShowSuccess] = useState(false);
   const progress = useMemo(() => Object.values(values).filter(Boolean).length, [values]);
 
   const handleChange = (event: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = event.target;
     setValues((current) => ({ ...current, [name]: value }));
     setErrors((current) => ({ ...current, [name]: "" }));
+    setShowSuccess(false);
   };
 
   const validateForm = () => {
@@ -46,9 +50,14 @@ export function LeadForm() {
     event.preventDefault();
     const nextErrors = validateForm();
     if (Object.keys(nextErrors).length > 0) return setErrors(nextErrors);
-    console.log("Mini CRM lead payload:", values);
+    
+    addLead(values);
+    setShowSuccess(true);
     setValues(initialValues);
     setErrors({});
+    
+    // Simple alert for now, we can add a toast later
+    setTimeout(() => setShowSuccess(false), 3000);
   };
 
   return (
@@ -61,6 +70,15 @@ export function LeadForm() {
           </div>
           <div className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-4 py-2 text-sm text-cyan-100">{progress}/8 fields</div>
         </div>
+
+        {showSuccess && (
+          <div className="mb-6 flex items-center gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-200 animate-in fade-in slide-in-from-top-2">
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <span>Lead đã được lưu vào hệ thống tạm thời (localStorage)!</span>
+          </div>
+        )}
 
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Họ và tên" name="fullName" value={values.fullName} onChange={handleChange} error={errors.fullName} placeholder="Nguyễn Minh Anh" />
