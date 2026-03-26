@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useMemo, useState } from "react";
+import { use, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LeadForm } from "@/components/leads/LeadForm";
@@ -17,6 +17,7 @@ export default function LeadDetailPage({ params }: PageProps) {
   const { leads, updateLead, updateLeadStatus, deleteLead } = useLeads();
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
+  const [, startTransition] = useTransition();
 
   const lead = leads.find((item) => item.id === id);
   const ownerOptions = useMemo(() => [...OWNER_OPTIONS], []);
@@ -35,8 +36,10 @@ export default function LeadDetailPage({ params }: PageProps) {
 
   const handleDelete = () => {
     if (confirm("Bạn có chắc chắn muốn xóa lead này?")) {
-      deleteLead(id);
-      router.push("/leads");
+      startTransition(async () => {
+        await deleteLead(id);
+        router.push("/leads");
+      });
     }
   };
 
@@ -193,7 +196,11 @@ export default function LeadDetailPage({ params }: PageProps) {
               {statusOptions.map((option) => (
                 <button
                   key={option.value}
-                  onClick={() => updateLeadStatus(id, option.value)}
+                  onClick={() =>
+                    startTransition(async () => {
+                      await updateLeadStatus(id, option.value);
+                    })
+                  }
                   className={`flex items-center justify-between rounded-2xl border px-5 py-3 text-sm transition ${
                     lead.status === option.value
                       ? "border-cyan-300 bg-cyan-300/10 text-cyan-200"
@@ -221,9 +228,11 @@ export default function LeadDetailPage({ params }: PageProps) {
               </div>
               <button
                 onClick={() =>
-                  updateLead(id, {
-                    routingMode: isManualOwner ? "auto" : "manual",
-                    assignedTo: isManualOwner ? lead.assignedTo : ownerOptions[0],
+                  startTransition(async () => {
+                    await updateLead(id, {
+                      routingMode: isManualOwner ? "auto" : "manual",
+                      assignedTo: isManualOwner ? lead.assignedTo : ownerOptions[0],
+                    });
                   })
                 }
                 className={`rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] transition ${
@@ -244,9 +253,11 @@ export default function LeadDetailPage({ params }: PageProps) {
               value={lead.assignedTo}
               disabled={!isManualOwner}
               onChange={(event) =>
-                updateLead(id, {
-                  assignedTo: event.target.value,
-                  routingMode: "manual",
+                startTransition(async () => {
+                  await updateLead(id, {
+                    assignedTo: event.target.value,
+                    routingMode: "manual",
+                  });
                 })
               }
               className="mt-3 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none transition focus:border-cyan-400 disabled:cursor-not-allowed disabled:opacity-60"

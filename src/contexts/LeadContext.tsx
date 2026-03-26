@@ -1,21 +1,23 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useRef, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { Lead, LeadFormValues, LeadRoutingMode } from "@/types/lead";
 import { calculateLeadScore } from "@/utils/leadScoring";
 import { calculateLeadRouting } from "@/utils/routing";
+import { supabase } from "@/lib/supabase";
+import { leadToRow, rowToLead } from "@/utils/leadMapper";
+import { LeadRow } from "@/types/supabase";
 
 interface LeadContextType {
   leads: Lead[];
-  addLead: (lead: LeadFormValues) => Lead;
-  updateLead: (id: string, updates: Partial<Lead>) => void;
-  updateLeadStatus: (id: string, status: Lead["status"]) => void;
-  deleteLead: (id: string) => void;
+  isLoading: boolean;
+  addLead: (lead: LeadFormValues) => Promise<Lead>;
+  updateLead: (id: string, updates: Partial<Lead>) => Promise<void>;
+  updateLeadStatus: (id: string, status: Lead["status"]) => Promise<void>;
+  deleteLead: (id: string) => Promise<void>;
 }
 
 const LeadContext = createContext<LeadContextType | undefined>(undefined);
-
-const LOCAL_STORAGE_KEY = "mindx_mini_crm_leads";
 
 function buildLeadSnapshot(baseLead: Partial<Lead> & LeadFormValues) {
   const formValues: LeadFormValues = {
@@ -43,97 +45,111 @@ function buildLeadSnapshot(baseLead: Partial<Lead> & LeadFormValues) {
 }
 
 export function LeadProvider({ children }: { children: React.ReactNode }) {
-  const [leads, setLeads] = useState<Lead[]>(() => {
-    if (typeof window === "undefined") {
-      return [];
-    }
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-    const savedLeads = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (!savedLeads) {
-      return [];
-    }
-
-    try {
-      const parsedLeads = JSON.parse(savedLeads) as Array<Partial<Lead> & LeadFormValues>;
-      return parsedLeads.map((lead) => {
-        const snapshot = buildLeadSnapshot(lead);
-
-        return {
-          ...snapshot.formValues,
-          id: lead.id ?? crypto.randomUUID(),
-          status: lead.status ?? "New",
-          score: lead.score ?? snapshot.score,
-          scoreFactors: lead.scoreFactors ?? snapshot.scoreFactors,
-          assignedTo: snapshot.assignedTo,
-          routingMode: snapshot.routingMode,
-          createdAt: lead.createdAt ?? new Date().toISOString(),
-        } satisfies Lead;
-      });
-    } catch (error) {
-      console.error("Failed to parse saved leads:", error);
-      return [];
-    }
-  });
-  const hasHydratedRef = useRef(false);
-
+  // ─── Load leads từ Supabase khi mount ───────────────────────────────────────
   useEffect(() => {
-    if (!hasHydratedRef.current) {
-      hasHydratedRef.current = true;
-      return;
+    async function fetchLeads() {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from("leads")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Failed to fetch leads from Supabase:", error.message);
+      } else {
+        setLeads((data as LeadRow[]).map(rowToLead));
+      }
+      setIsLoading(false);
     }
 
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(leads));
-  }, [leads]);
+    fetchLeads();
+  }, []);
 
-  const addLead = (leadData: LeadFormValues) => {
+  // ─── addLead ─────────────────────────────────────────────────────────────────
+  const addLead = useCallback(async (leadData: LeadFormValues): Promise<Lead> => {
     const snapshot = buildLeadSnapshot(leadData);
-    const newLead: Lead = {
+
+    const payload = leadToRow({
       ...snapshot.formValues,
-      id: crypto.randomUUID(),
       status: "New",
       score: snapshot.score,
       scoreFactors: snapshot.scoreFactors,
       assignedTo: snapshot.assignedTo,
       routingMode: snapshot.routingMode,
-      createdAt: new Date().toISOString(),
-    };
-    setLeads((prev: Lead[]) => [newLead, ...prev]);
+    });
+
+    const { data, error } = await supabase
+      .from("leads")
+      .insert(payload)
+      .select()
+      .single();
+
+    if (error) throw new Error(`addLead failed: ${error.message}`);
+
+    const newLead = rowToLead(data as LeadRow);
+    setLeads((prev) => [newLead, ...prev]);
     return newLead;
-  };
+  }, []);
 
-  const updateLead = (id: string, updates: Partial<Lead>) => {
-    setLeads((prev: Lead[]) =>
-      prev.map((lead: Lead) => {
-        if (lead.id !== id) {
-          return lead;
-        }
+  // ─── updateLead ──────────────────────────────────────────────────────────────
+  const updateLead = useCallback(async (id: string, updates: Partial<Lead>): Promise<void> => {
+    const existing = leads.find((l) => l.id === id);
+    if (!existing) return;
 
-        const nextLeadBase = { ...lead, ...updates };
-        const snapshot = buildLeadSnapshot(nextLeadBase);
+    const merged = { ...existing, ...updates };
+    const snapshot = buildLeadSnapshot(merged);
 
-        return {
-          ...lead,
-          ...snapshot.formValues,
-          ...updates,
-          score: snapshot.score,
-          scoreFactors: snapshot.scoreFactors,
-          routingMode: snapshot.routingMode,
-          assignedTo: snapshot.assignedTo,
-        };
-      })
-    );
-  };
+    const payload = leadToRow({
+      ...snapshot.formValues,
+      status: merged.status,
+      score: snapshot.score,
+      scoreFactors: snapshot.scoreFactors,
+      assignedTo: snapshot.assignedTo,
+      routingMode: snapshot.routingMode,
+    });
 
-  const updateLeadStatus = (id: string, status: Lead["status"]) => {
-    setLeads((prev: Lead[]) => prev.map((lead) => (lead.id === id ? { ...lead, status } : lead)));
-  };
+    const { data, error } = await supabase
+      .from("leads")
+      .update(payload)
+      .eq("id", id)
+      .select()
+      .single();
 
-  const deleteLead = (id: string) => {
-    setLeads((prev: Lead[]) => prev.filter((lead) => lead.id !== id));
-  };
+    if (error) throw new Error(`updateLead failed: ${error.message}`);
+
+    const updatedLead = rowToLead(data as LeadRow);
+    setLeads((prev) => prev.map((l) => (l.id === id ? updatedLead : l)));
+  }, [leads]);
+
+  // ─── updateLeadStatus ────────────────────────────────────────────────────────
+  const updateLeadStatus = useCallback(async (id: string, status: Lead["status"]): Promise<void> => {
+    const { error } = await supabase
+      .from("leads")
+      .update({ status })
+      .eq("id", id);
+
+    if (error) throw new Error(`updateLeadStatus failed: ${error.message}`);
+
+    setLeads((prev) => prev.map((l) => (l.id === id ? { ...l, status } : l)));
+  }, []);
+
+  // ─── deleteLead ──────────────────────────────────────────────────────────────
+  const deleteLead = useCallback(async (id: string): Promise<void> => {
+    const { error } = await supabase
+      .from("leads")
+      .delete()
+      .eq("id", id);
+
+    if (error) throw new Error(`deleteLead failed: ${error.message}`);
+
+    setLeads((prev) => prev.filter((l) => l.id !== id));
+  }, []);
 
   return (
-    <LeadContext.Provider value={{ leads, addLead, updateLead, updateLeadStatus, deleteLead }}>
+    <LeadContext.Provider value={{ leads, isLoading, addLead, updateLead, updateLeadStatus, deleteLead }}>
       {children}
     </LeadContext.Provider>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useMemo, useState } from "react";
+import { ChangeEvent, FormEvent, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Lead, LeadFormValues } from "@/types/lead";
 import { useLeads } from "@/contexts/LeadContext";
@@ -71,6 +71,8 @@ export function LeadForm({ initialData, onSuccess }: LeadFormProps) {
     return nextErrors;
   };
 
+  const [isPending, startTransition] = useTransition();
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const nextErrors = validateForm();
@@ -88,20 +90,27 @@ export function LeadForm({ initialData, onSuccess }: LeadFormProps) {
       return;
     }
 
-    if (initialData?.id) {
-      updateLead(initialData.id, values);
-      setShowSuccess(true);
-      setErrors({});
-      onSuccess?.();
-      setTimeout(() => setShowSuccess(false), 3000);
-      return;
-    }
+    startTransition(async () => {
+      try {
+        if (initialData?.id) {
+          await updateLead(initialData.id, values);
+          setShowSuccess(true);
+          setErrors({});
+          onSuccess?.();
+          setTimeout(() => setShowSuccess(false), 3000);
+          return;
+        }
 
-    const createdLead = addLead(values);
-    setShowSuccess(true);
-    setErrors({});
-    onSuccess?.();
-    router.push(`/leads?created=${createdLead.id}`);
+        const createdLead = await addLead(values);
+        setShowSuccess(true);
+        setErrors({});
+        onSuccess?.();
+        router.push(`/leads?created=${createdLead.id}`);
+      } catch (err) {
+        setErrors({ submit: "Lưu thất bại. Vui lòng thử lại." });
+        console.error(err);
+      }
+    });
   };
 
   return (
@@ -173,9 +182,10 @@ export function LeadForm({ initialData, onSuccess }: LeadFormProps) {
           <button
             id="lead-submit-button"
             type="submit"
-            className="rounded-full bg-gradient-to-r from-cyan-300 via-sky-400 to-fuchsia-400 px-6 py-3 text-sm font-semibold text-slate-950 shadow-[0_18px_34px_rgba(34,211,238,0.28)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_40px_rgba(34,211,238,0.38)]"
+            disabled={isPending}
+            className="rounded-full bg-gradient-to-r from-cyan-300 via-sky-400 to-fuchsia-400 px-6 py-3 text-sm font-semibold text-slate-950 shadow-[0_18px_34px_rgba(34,211,238,0.28)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_40px_rgba(34,211,238,0.38)] disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            Lưu lead tạm thời
+            {isPending ? "Đang lưu..." : "Lưu lead"}
           </button>
           <button
             id="lead-reset-button"

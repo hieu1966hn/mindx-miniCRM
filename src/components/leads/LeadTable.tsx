@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTransition } from "react";
 import { useLeads } from "@/contexts/LeadContext";
 import { Lead } from "@/types/lead";
 import { getLeadTemperature } from "@/utils/leadPriority";
@@ -22,6 +23,7 @@ interface LeadTableProps {
 export function LeadTable({ displayLeads, highlightedLeadId }: LeadTableProps) {
   const { leads, deleteLead } = useLeads();
   const router = useRouter();
+  const [, startTransition] = useTransition();
   const listToRender = displayLeads ?? leads;
 
   if (listToRender.length === 0) {
@@ -139,7 +141,10 @@ export function LeadTable({ displayLeads, highlightedLeadId }: LeadTableProps) {
                     <button
                       id={`delete-lead-${lead.id}`}
                       onClick={() => {
-                        if (confirm("Xóa lead này?")) deleteLead(lead.id);
+                        if (confirm("Xóa lead này?"))
+                          startTransition(async () => {
+                            await deleteLead(lead.id);
+                          });
                       }}
                       className="rounded-2xl border border-white/10 bg-white/5 p-2.5 text-slate-400 transition duration-300 hover:border-rose-500/45 hover:bg-rose-500/10 hover:text-rose-400"
                       title="Xóa"
