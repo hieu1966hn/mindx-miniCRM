@@ -152,14 +152,14 @@ export default function Home() {
               <Link
                 id="dashboard-create-lead"
                 href="/leads/new"
-                className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-950 transition hover:-translate-y-0.5 hover:bg-cyan-200"
+                className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-950 transition hover:-translate-y-0.5 hover:bg-cyan-200"
               >
                 Tạo lead mới
               </Link>
               <Link
                 id="dashboard-open-board"
                 href="/leads"
-                className="rounded-full border border-white/12 px-6 py-3 text-sm text-slate-200 transition hover:-translate-y-0.5 hover:border-cyan-300/40 hover:bg-white/6"
+                className="inline-flex items-center justify-center rounded-full border border-white/12 px-6 py-3 text-sm text-slate-200 transition hover:-translate-y-0.5 hover:border-cyan-300/40 hover:bg-white/6"
               >
                 Mở leads board
               </Link>
