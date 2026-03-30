@@ -8,14 +8,15 @@ import { LeadFilters } from "@/components/leads/LeadFilters";
 import { useLeads } from "@/contexts/LeadContext";
 import { Lead } from "@/types/lead";
 import { getLeadTemperature } from "@/utils/leadPriority";
+import { Download, PlusCircle, CheckCircle2, AlertCircle } from "lucide-react";
 
 const STATUS_ORDER: Lead["status"][] = ["New", "Contacting", "Interested", "Converted", "Lost"];
-const STATUS_TONES: Record<Lead["status"], string> = {
-  New: "from-cyan-400/30 to-cyan-500/10 text-cyan-100",
-  Contacting: "from-amber-300/30 to-amber-500/10 text-amber-100",
-  Interested: "from-fuchsia-400/30 to-fuchsia-500/10 text-fuchsia-100",
-  Converted: "from-emerald-400/30 to-emerald-500/10 text-emerald-100",
-  Lost: "from-slate-400/20 to-slate-500/10 text-slate-200",
+const STATUS_COLORS: Record<Lead["status"], { bg: string, text: string, bar: string }> = {
+  New: { bg: "bg-blue-50", text: "text-blue-700", bar: "bg-blue-400" },
+  Contacting: { bg: "bg-amber-50", text: "text-amber-700", bar: "bg-amber-400" },
+  Interested: { bg: "bg-purple-50", text: "text-purple-700", bar: "bg-purple-400" },
+  Converted: { bg: "bg-emerald-50", text: "text-emerald-700", bar: "bg-emerald-400" },
+  Lost: { bg: "bg-slate-100", text: "text-slate-700", bar: "bg-slate-400" },
 };
 
 function formatPercent(value: number) {
@@ -32,8 +33,9 @@ function LeadsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const createdLeadId = searchParams.get("created")?.trim() ?? "";
+  const globalQuery = searchParams.get("q")?.trim() ?? "";
 
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(globalQuery);
   const [statusFilter, setStatusFilter] = useState("");
   const [sourceFilter, setSourceFilter] = useState("");
   const [scoreFilter, setScoreFilter] = useState("");
@@ -51,12 +53,14 @@ function LeadsPageContent() {
     return () => window.clearTimeout(timeoutId);
   }, [createdLeadId, router]);
 
+  useEffect(() => {
+    setSearchTerm(globalQuery);
+  }, [globalQuery]);
+
   const createdLead = useMemo(
     () => leads.find((lead) => lead.id === createdLeadId),
     [createdLeadId, leads]
   );
-
-  const hasActiveFilters = Boolean(searchTerm || statusFilter || sourceFilter || scoreFilter);
 
   const handleResetFilters = () => {
     setSearchTerm("");
@@ -145,7 +149,7 @@ function LeadsPageContent() {
 
     const recentLeads = [...leads]
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, 3);
+      .slice(0, 4);
 
     return {
       totalLeads,
@@ -210,231 +214,189 @@ function LeadsPageContent() {
   };
 
   return (
-    <section className="grid gap-6">
-      <div className="relative overflow-hidden rounded-[32px] border border-white/10 bg-slate-950/60 p-7 shadow-[0_24px_80px_rgba(8,15,37,0.45)]">
-        <div className="absolute inset-x-0 top-0 h-32 bg-[radial-gradient(circle_at_20%_0%,rgba(34,211,238,0.20),transparent_38%),radial-gradient(circle_at_80%_10%,rgba(217,70,239,0.18),transparent_35%)]" />
-        <div className="relative flex flex-col gap-8 xl:flex-row xl:items-end xl:justify-between">
-          <div className="max-w-3xl">
-            <p className="text-xs uppercase tracking-[0.32em] text-cyan-200/80">Leads • Pipeline view</p>
-            <h3 className="mt-3 font-serif text-4xl text-white sm:text-5xl">
-              Danh sách lead để lọc nhanh, ưu tiên đúng và follow-up không trượt nhịp.
-            </h3>
-            <p className="mt-5 max-w-2xl text-base leading-8 text-slate-300">
-              Đây là mặt bàn làm việc chính cho team tuyển sinh: tìm lead theo trạng thái, nguồn,
-              nhiệt độ, rồi xuất nhanh danh sách đang hiển thị hoặc tạo lead mới ngay khi có data vào.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap gap-3 xl:justify-end">
-            <button
-              id="export-filtered-csv"
-              type="button"
-              onClick={handleExportCsv}
-              disabled={filteredAndSortedLeads.length === 0}
-              className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-5 py-3 text-sm font-semibold text-cyan-50 transition hover:-translate-y-0.5 hover:border-cyan-300/40 hover:bg-cyan-300/15 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Export danh sách đang lọc
-            </button>
-            <Link
-              id="leads-back-to-new"
-              href="/leads/new"
-              className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-950 transition hover:-translate-y-0.5 hover:bg-cyan-200"
-            >
-              + Thêm lead mới
-            </Link>
-          </div>
+    <section className="mx-auto max-w-7xl space-y-6">
+      {/* Header Area */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="max-w-3xl">
+          <h1 className="text-2xl font-bold text-slate-900">Pipeline lead</h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Danh sách lead để lọc nhanh, theo dõi ưu tiên và quản lý follow-up hàng ngày.
+          </p>
         </div>
 
-        {createdLead ? (
-          <div className="relative mt-6 overflow-hidden rounded-[26px] border border-emerald-300/25 bg-[linear-gradient(135deg,rgba(16,185,129,0.20),rgba(6,182,212,0.10))] p-4 text-emerald-50 shadow-[0_20px_60px_rgba(16,185,129,0.16)]">
-            <div className="absolute inset-y-0 left-0 w-1 bg-emerald-300/90" />
-            <div className="pl-4">
-              <p className="text-xs uppercase tracking-[0.24em] text-emerald-100/80">Lead created successfully</p>
-              <p className="mt-2 text-base font-semibold sm:text-lg">
-                Đã tạo lead <span className="text-white">{createdLead.fullName}</span> và thêm vào pipeline.
-              </p>
-              <p className="mt-1 text-sm text-emerald-100/80">
-                Hàng vừa tạo đang được highlight bên dưới để bạn kiểm tra nhanh.
-              </p>
-            </div>
-          </div>
-        ) : null}
-
-        <div className="relative mt-8 grid gap-3 sm:grid-cols-2 2xl:grid-cols-5">
-          {[
-            {
-              label: "Visible now",
-              value: dashboard.visibleLeads,
-              hint: `${dashboard.totalLeads} lead trong hệ thống`,
-              tone: "text-cyan-100",
-            },
-            {
-              label: "Avg. score",
-              value: dashboard.avgScore,
-              hint: `${dashboard.hotLeads} hot / ${dashboard.warmLeads} warm`,
-              tone: "text-amber-100",
-            },
-            {
-              label: "Close-ready",
-              value: dashboard.closeReady,
-              hint: `${dashboard.interestedLeads} interested + ${dashboard.convertedLeads} converted`,
-              tone: "text-fuchsia-100",
-            },
-            {
-              label: "Conversion",
-              value: formatPercent(dashboard.conversionRate),
-              hint: `${dashboard.convertedLeads} lead đã convert`,
-              tone: "text-emerald-100",
-            },
-            {
-              label: "Focus queue",
-              value: dashboard.hotLeads,
-              hint: "Số lead cần follow-up sớm",
-              tone: "text-rose-100",
-            },
-          ].map((metric) => (
-            <div
-              key={metric.label}
-              className="rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.10),rgba(255,255,255,0.04))] p-4 backdrop-blur"
-            >
-              <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">{metric.label}</p>
-              <p className={`mt-3 text-3xl font-semibold ${metric.tone}`}>{metric.value}</p>
-              <p className="mt-3 text-sm text-slate-400">{metric.hint}</p>
-            </div>
-          ))}
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            id="export-filtered-csv"
+            type="button"
+            onClick={handleExportCsv}
+            disabled={filteredAndSortedLeads.length === 0}
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Download size={18} />
+            Xuất CSV
+          </button>
+          <Link
+            id="leads-back-to-new"
+            href="/leads/new"
+            className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-red-700"
+          >
+            <PlusCircle size={18} />
+            Thêm lead mới
+          </Link>
         </div>
       </div>
 
-      {/* Dashboard Analytics area over Two Columns */}
-      <div className="grid gap-6 xl:grid-cols-[1fr_2fr]">
-        <div className="grid gap-6 content-start">
-          {/* Source pulse */}
-          <div className="rounded-[30px] border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
-            <p className="text-xs uppercase tracking-[0.24em] text-cyan-200/75">Source pulse</p>
-            <h4 className="mt-2 text-2xl text-white">Nguồn vào đang kéo pipeline</h4>
-            <div className="mt-6 space-y-4">
-              {dashboard.sourceBreakdown.length > 0 ? (
-                dashboard.sourceBreakdown.slice(0, 4).map((item) => (
-                  <div key={item.source} className="space-y-2">
-                    <div className="flex items-center justify-between gap-3 text-sm">
-                      <span className="text-slate-200">{item.source}</span>
-                      <span className="text-slate-400">{item.count} lead</span>
-                    </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-white/6">
-                      <div
-                        className="h-full rounded-full bg-[linear-gradient(90deg,rgba(34,211,238,0.9),rgba(217,70,239,0.8))]"
-                        style={{ width: `${Math.max(item.share, 10)}%` }}
-                      />
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-slate-400">Chưa có dữ liệu nguồn để phân tích.</p>
-              )}
-            </div>
-          </div>
-
-          {/* Owner load */}
-          <div className="rounded-[30px] border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
-            <p className="text-xs uppercase tracking-[0.24em] text-amber-200/75">Owner load</p>
-            <h4 className="mt-2 text-2xl text-white">Ai đang giữ nhiều lead nhất</h4>
-            <div className="mt-6 space-y-3">
-              {dashboard.ownerBreakdown.length > 0 ? (
-                dashboard.ownerBreakdown.slice(0, 3).map((item, index) => (
-                  <div key={item.owner} className="flex items-center justify-between rounded-[24px] border border-white/8 bg-slate-950/45 px-4 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/8 text-sm font-semibold text-white">
-                        {index + 1}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-white">{item.owner}</p>
-                        <p className="mt-1 text-xs uppercase tracking-[0.16em] text-slate-500">
-                          {formatPercent(item.share)} tổng pipeline
-                        </p>
-                      </div>
-                    </div>
-                    <p className="text-lg font-semibold text-cyan-100">{item.count}</p>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-slate-400">Chưa có owner assignment để hiển thị.</p>
-              )}
+      {/* Created Lead Banner */}
+      {createdLead && (
+        <div className="flex items-center justify-between rounded-lg border border-green-200 bg-green-50 p-4">
+          <div className="flex items-center gap-3">
+            <CheckCircle2 className="h-5 w-5 text-green-600" />
+            <div>
+              <p className="text-sm font-medium text-green-800">
+                Đã tạo lead <span className="font-bold">{createdLead.fullName}</span> thành công!
+              </p>
+              <p className="mt-0.5 text-xs text-green-600">
+                Lead đã được thêm vào pipeline và đang được đánh dấu nổi bật trong danh sách bên dưới.
+              </p>
             </div>
           </div>
         </div>
+      )}
 
-        <div className="grid gap-6 content-start">
-          {/* Status Breakdown - moved to taking more width */}
-          <div className="rounded-[30px] border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs uppercase tracking-[0.24em] text-fuchsia-200/75">Pipeline distribution</p>
-                <h4 className="mt-2 text-2xl text-white">Phân bố theo trạng thái</h4>
+      {/* Analytics Highlights */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        {[
+          {
+            label: "Hiển thị hiện tại",
+            value: dashboard.visibleLeads,
+            hint: `Trên tổng số ${dashboard.totalLeads} lead`,
+            color: "text-blue-600",
+          },
+          {
+            label: "Điểm trung bình",
+            value: dashboard.avgScore,
+            hint: `${dashboard.hotLeads} hot / ${dashboard.warmLeads} warm`,
+            color: "text-amber-600",
+          },
+          {
+            label: "Sẵn sàng chốt",
+            value: dashboard.closeReady,
+            hint: `Interested + Converted`,
+            color: "text-purple-600",
+          },
+          {
+            label: "Tỉ lệ chuyển đổi",
+            value: formatPercent(dashboard.conversionRate),
+            hint: `${dashboard.convertedLeads} lead thành công`,
+            color: "text-emerald-600",
+          },
+          {
+            label: "Hàng chờ ưu tiên",
+            value: dashboard.hotLeads,
+            hint: "Nóng cần follow-up gấp",
+            color: "text-red-600",
+          },
+        ].map((metric, idx) => (
+          <div
+            key={idx}
+            className="flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+          >
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+              {metric.label}
+            </p>
+            <p className={`mt-3 text-3xl font-bold ${metric.color}`}>
+              {metric.value}
+            </p>
+            <p className="mt-1 text-xs text-slate-500">{metric.hint}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Breakdown Area */}
+      <div className="grid gap-6 lg:grid-cols-12">
+         {/* Status Breakdown */}
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-5">
+          <h2 className="text-base font-bold text-slate-900">Phân bố trạng thái</h2>
+          <div className="mt-5 space-y-4">
+            {dashboard.statusBreakdown.map((item) => (
+              <div key={item.status}>
+                <div className="mb-1 flex items-center justify-between text-sm">
+                  <span className="font-medium text-slate-700">{item.status}</span>
+                  <span className="text-slate-500">
+                    {item.count} ({formatPercent(item.share)})
+                  </span>
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                  <div
+                    className={`h-full rounded-full ${STATUS_COLORS[item.status].bar}`}
+                    style={{ width: `${Math.max(item.share, item.count > 0 ? 3 : 0)}%` }}
+                  />
+                </div>
               </div>
-            </div>
+            ))}
+          </div>
+        </div>
 
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              {dashboard.statusBreakdown.map((item) => (
-                <div key={item.status} className="rounded-[24px] border border-white/8 bg-slate-950/45 p-4 flex flex-col justify-between">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-medium text-white">{item.status}</p>
-                      <p className="mt-1 text-xs uppercase tracking-[0.16em] text-slate-500">
-                        {item.count} lead • {formatPercent(item.share)}
-                      </p>
-                    </div>
-                    <div className={`shrink-0 rounded-full bg-gradient-to-r px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] ${STATUS_TONES[item.status]}`}>
-                      {item.count}
-                    </div>
+        {/* Source Breakdown */}
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-3">
+          <h2 className="text-base font-bold text-slate-900">Nguồn Lead</h2>
+          <div className="mt-5 space-y-4">
+            {dashboard.sourceBreakdown.length > 0 ? (
+              dashboard.sourceBreakdown.slice(0, 4).map((item) => (
+                <div key={item.source}>
+                  <div className="mb-1 flex items-center justify-between text-sm">
+                    <span className="truncate pr-2 font-medium text-slate-700">
+                      {item.source}
+                    </span>
+                    <span className="text-slate-500 shrink-0">{item.count}</span>
                   </div>
-                  <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/6 w-full">
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
                     <div
-                      className={`h-full rounded-full bg-gradient-to-r ${STATUS_TONES[item.status].split(" text-")[0]}`}
-                      style={{ width: `${Math.max(item.share, item.count > 0 ? 8 : 0)}%` }}
+                      className="h-full rounded-full bg-slate-400"
+                      style={{ width: `${Math.max(item.share, 5)}%` }}
                     />
                   </div>
                 </div>
-              ))}
-            </div>
+              ))
+            ) : (
+              <p className="text-sm text-slate-500 text-center py-4 bg-slate-50 rounded-lg">Không có nguồn dữ liệu</p>
+            )}
           </div>
+        </div>
 
-          <div className="rounded-[30px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] p-6 backdrop-blur-xl">
-            <p className="text-xs uppercase tracking-[0.24em] text-fuchsia-200/75">Recent movement</p>
-            <h4 className="mt-2 text-2xl text-white">Lead mới vào gần đây</h4>
-            <div className="mt-6 grid gap-3 lg:grid-cols-2">
-              {dashboard.recentLeads.length > 0 ? (
-                dashboard.recentLeads.slice(0, 4).map((lead) => {
-                  const temperature = getLeadTemperature(lead.score);
-                  return (
-                    <div key={lead.id} className="rounded-[24px] border border-white/8 bg-slate-950/45 p-4 group cursor-pointer hover:bg-white/5 transition" onClick={() => router.push(`/leads/${lead.id}`)}>
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <p className="text-sm font-semibold text-white">{lead.fullName}</p>
-                          <p className="mt-1 text-xs text-slate-400">
-                            {lead.programInterest} • {lead.campusOrRegion}
-                          </p>
-                        </div>
-                        <span className={`shrink-0 text-[10px] font-semibold uppercase tracking-[0.18em] ${temperature.textClassName}`}>
-                          {temperature.label}
-                        </span>
-                      </div>
-                      <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-400">
-                        <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1">{lead.status}</span>
-                        <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1">{lead.assignedTo}</span>
-                      </div>
+        {/* Owner Breakdown */}
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-4">
+          <h2 className="text-base font-bold text-slate-900">Top Owners</h2>
+          <div className="mt-5 space-y-3">
+            {dashboard.ownerBreakdown.length > 0 ? (
+              dashboard.ownerBreakdown.slice(0, 3).map((item, index) => (
+                <div
+                  key={item.owner}
+                  className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 px-4 py-3"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 text-xs font-bold text-slate-700">
+                      #{index + 1}
                     </div>
-                  );
-                })
-              ) : (
-                <p className="text-sm text-slate-400 lg:col-span-2">Tạo lead đầu tiên để thấy recent activity.</p>
-              )}
-            </div>
+                    <div>
+                      <p className="text-sm font-medium text-slate-900">{item.owner}</p>
+                      <p className="text-xs text-slate-500">
+                        Chiếm {formatPercent(item.share)} pipeline
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-base font-bold text-slate-900">{item.count}</p>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-slate-500 text-center py-4 bg-slate-50 rounded-lg">Chưa phân công</p>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Leads Management Area (100% Width) */}
-      <div className="grid gap-6 mt-4">
+      {/* Leads Management Area (Filters + Table) */}
+      <div className="grid gap-6">
         <LeadFilters
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
@@ -452,73 +414,25 @@ function LeadsPageContent() {
         {filteredAndSortedLeads.length > 0 || leads.length === 0 ? (
           <LeadTable displayLeads={filteredAndSortedLeads} highlightedLeadId={createdLeadId} />
         ) : (
-          <div className="rounded-[30px] border border-dashed border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.88),rgba(15,23,42,0.56))] p-8 text-center shadow-[0_24px_80px_rgba(8,15,37,0.35)]">
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-white/10 bg-white/5 text-cyan-200 shadow-[0_0_40px_rgba(34,211,238,0.14)]">
-              <svg className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-4.35-4.35m1.85-5.15a7.5 7.5 0 11-15 0 7.5 7.5 0 0115 0z" />
-              </svg>
+          <div className="flex min-h-[300px] flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-sm border border-slate-100 mb-4">
+              <AlertCircle className="h-8 w-8 text-slate-400" />
             </div>
-            <p className="mt-6 text-xs uppercase tracking-[0.28em] text-cyan-200/75">No matching leads</p>
-            <h4 className="mt-3 text-3xl text-white">Không có lead nào khớp bộ lọc hiện tại</h4>
-            <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-slate-400">
-              Hãy nới bộ lọc, đổi từ khóa tìm kiếm hoặc reset toàn bộ để quay lại dashboard đầy đủ.
-              Đây là empty state dành riêng cho search/filter, khác với trạng thái chưa có dữ liệu.
+            <h4 className="text-lg font-bold text-slate-900">Không tìm thấy lead nào</h4>
+            <p className="mt-2 max-w-md text-sm text-slate-500">
+              Không có lead nào khớp với bộ lọc hiện tại của bạn. Vui lòng thay đổi từ khóa hoặc xóa bớt các bộ lọc để xem lại danh sách.
             </p>
             <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
               <button
-                id="clear-empty-state-filters"
                 type="button"
                 onClick={handleResetFilters}
-                className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-5 py-3 text-sm font-semibold text-cyan-50 transition hover:-translate-y-0.5 hover:border-cyan-300/40 hover:bg-cyan-300/15"
+                className="rounded-lg bg-white border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 hover:text-slate-900"
               >
-                Xóa bộ lọc hiện tại
+                Xóa tất cả bộ lọc
               </button>
-              <Link
-                id="empty-state-create-lead"
-                href="/leads/new"
-                className="rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:border-white/20 hover:bg-white/10"
-              >
-                Tạo lead mới
-              </Link>
-            </div>
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-xs uppercase tracking-[0.16em] text-slate-500">
-              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">Query: {searchTerm || "none"}</span>
-              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">Status: {statusFilter || "all"}</span>
-              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">Source: {sourceFilter || "all"}</span>
-              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">Score: {scoreFilter || "all"}</span>
-              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">Sort: {sortBy}</span>
             </div>
           </div>
         )}
-      </div>
-
-      <div className="rounded-[30px] border border-white/10 bg-white/6 p-7 backdrop-blur-xl lg:px-10">
-        <p className="text-xs uppercase tracking-[0.24em] text-fuchsia-200/75">Vòng 8 • Dashboard + Polish</p>
-        <ul className="mt-6 grid gap-4 text-sm leading-7 text-slate-400 sm:grid-cols-2 lg:grid-cols-4">
-          <li className="flex gap-2">
-            <span className="text-cyan-400">✓</span>
-            KPI hero + conversion snapshot
-          </li>
-          <li className="flex gap-2">
-            <span className="text-cyan-400">✓</span>
-            Breakdown theo status/source/owner
-          </li>
-          <li className="flex gap-2">
-            <span className="text-cyan-400">✓</span>
-            CSV export theo danh sách đang lọc
-          </li>
-          <li className="flex gap-2">
-            <span className="text-cyan-400">✓</span>
-            Board polish responsive, giàu tín hiệu hơn
-          </li>
-        </ul>
-        <div className="mt-6 flex flex-wrap gap-3 text-xs uppercase tracking-[0.18em] text-slate-500">
-          <span className={`rounded-full border px-3 py-1 ${hasActiveFilters ? "border-cyan-300/25 bg-cyan-300/10 text-cyan-100" : "border-white/10 bg-white/5 text-slate-400"}`}>
-            Filter state: {hasActiveFilters ? "active" : "clean"}
-          </span>
-          <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">Reset UX added</span>
-          <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">Search empty-state handled</span>
-        </div>
       </div>
     </section>
   );
@@ -528,13 +442,15 @@ export default function LeadsPage() {
   return (
     <Suspense
       fallback={
-        <section className="grid gap-6">
-          <div className="rounded-[32px] border border-white/10 bg-slate-950/60 p-7 shadow-[0_24px_80px_rgba(8,15,37,0.45)]">
-            <p className="text-xs uppercase tracking-[0.32em] text-cyan-200/80">Dashboard • Loading</p>
-            <h3 className="mt-3 font-serif text-4xl text-white sm:text-5xl">Đang tải pipeline leads…</h3>
-            <p className="mt-5 max-w-2xl text-base leading-8 text-slate-300">
-              Hệ thống đang khởi tạo bộ lọc và đồng bộ trạng thái dashboard.
-            </p>
+        <section className="mx-auto max-w-7xl">
+          <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
+            <div className="h-6 w-48 animate-pulse rounded bg-slate-200"></div>
+            <div className="mt-4 h-4 w-96 animate-pulse rounded bg-slate-100"></div>
+            <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="h-28 animate-pulse rounded-lg bg-slate-50"></div>
+              ))}
+            </div>
           </div>
         </section>
       }

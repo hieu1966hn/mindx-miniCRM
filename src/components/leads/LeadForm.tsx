@@ -6,6 +6,7 @@ import { Lead, LeadFormValues } from "@/types/lead";
 import { useLeads } from "@/contexts/LeadContext";
 import { calculateLeadScore } from "@/utils/leadScoring";
 import { describeLeadRouting } from "@/utils/routing";
+import { CheckCircle2, AlertCircle, TrendingUp, Info } from "lucide-react";
 
 const AGE_GROUPS = ["Kids", "Teen", "18+"] as const;
 const PROGRAMS = ["Scratch", "Web Development", "Data Analytics", "AI/ML", "Robotics"];
@@ -31,7 +32,11 @@ interface LeadFormProps {
 export function LeadForm({ initialData, onSuccess }: LeadFormProps) {
   const router = useRouter();
   const { addLead, updateLead } = useLeads();
-  const [values, setValues] = useState<LeadFormValues>(initialData ?? initialValues);
+  const defaultValues = useMemo<LeadFormValues>(
+    () => initialData ?? initialValues,
+    [initialData]
+  );
+  const [values, setValues] = useState<LeadFormValues>(defaultValues);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showSuccess, setShowSuccess] = useState(false);
   const progress = useMemo(
@@ -62,7 +67,7 @@ export function LeadForm({ initialData, onSuccess }: LeadFormProps) {
   const validateForm = () => {
     const nextErrors: Record<string, string> = {};
     if (!values.fullName.trim()) nextErrors.fullName = "Vui lòng nhập họ và tên.";
-    if (!values.phone.trim() && !values.email.trim()) nextErrors.phone = "Cần ít nhất phone hoặc email.";
+    if (!values.phone.trim() && !values.email.trim()) nextErrors.phone = "Cần ít nhất số điện thoại hoặc email.";
     if (values.email && !/\S+@\S+\.\S+/.test(values.email)) nextErrors.email = "Email chưa đúng định dạng.";
     if (!values.ageGroup) nextErrors.ageGroup = "Hãy chọn nhóm tuổi.";
     if (!values.programInterest) nextErrors.programInterest = "Hãy chọn chương trình quan tâm.";
@@ -115,42 +120,43 @@ export function LeadForm({ initialData, onSuccess }: LeadFormProps) {
 
   return (
     <section className="grid gap-6 xl:grid-cols-[1.14fr_0.86fr]">
-      <form id="lead-create-form" onSubmit={handleSubmit} className="glass-panel-strong liquid-highlight rounded-[32px] p-6 lg:p-7">
+      <form id="lead-create-form" onSubmit={handleSubmit} className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm lg:p-7">
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.28em] text-cyan-200/70">Lead intake</p>
-            <h3 className="mt-2 text-3xl text-white sm:text-[2.2rem]">Tạo lead với cảm giác như đang dùng CRM thật.</h3>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
-              Form này vừa phục vụ nhập dữ liệu, vừa cho xem sớm chất lượng lead và cách hệ thống sẽ route ngay sau khi lưu.
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Tiếp nhận lead</p>
+            <h3 className="mt-1 text-2xl font-semibold text-slate-900 sm:text-3xl">Tạo lead mới</h3>
+            <p className="mt-2 text-sm text-slate-500">
+              Nhập thông tin khách hàng tiềm năng. Hệ thống sẽ tự động chấm điểm và phân bổ.
             </p>
           </div>
-          <div className="inline-flex items-center gap-3 self-start rounded-full border border-cyan-300/18 bg-cyan-300/10 px-4 py-2 text-sm text-cyan-100">
-            <span className="h-2 w-2 rounded-full bg-cyan-300 shadow-[0_0_14px_rgba(103,232,249,0.9)]" />
-            {progress}/7 checkpoints
+          <div className="inline-flex items-center gap-2 self-start rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium text-slate-700">
+            <span className="h-2 w-2 rounded-full bg-red-500" />
+            {progress}/7 trường
           </div>
         </div>
 
         {Object.keys(errors).length > 0 && (
           <div
-            className="mb-6 rounded-[22px] border border-rose-400/30 bg-rose-500/10 p-4 text-rose-50 shadow-[0_16px_36px_rgba(244,63,94,0.12)]"
+            className="mb-6 flex gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-red-800"
             role="alert"
             aria-live="assertive"
           >
-            <p className="text-sm font-semibold">Form chưa thể lưu. Vui lòng hoàn thành các trường bắt buộc.</p>
-            <ul className="mt-2 space-y-1 text-xs text-rose-100/90">
-              {Object.values(errors).map((error) => (
-                <li key={error}>• {error}</li>
-              ))}
-            </ul>
+            <AlertCircle className="h-5 w-5 shrink-0 text-red-500" />
+            <div>
+              <p className="text-sm font-medium">Form chưa thể lưu. Vui lòng kiểm tra lại thông tin.</p>
+              <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-red-700">
+                {Object.values(errors).map((error) => (
+                  <li key={error}>{error}</li>
+                ))}
+              </ul>
+            </div>
           </div>
         )}
 
         {showSuccess && (
-          <div className="mb-6 flex items-center gap-3 rounded-[22px] border border-emerald-500/25 bg-emerald-500/10 p-4 text-emerald-100 shadow-[0_16px_36px_rgba(16,185,129,0.12)]">
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-            <span>Lead đã được {initialData ? "cập nhật" : "lưu"} thành công!</span>
+          <div className="mb-6 flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-emerald-800">
+            <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-500" />
+            <span className="text-sm font-medium">Lead đã được {initialData ? "cập nhật" : "lưu"} thành công!</span>
           </div>
         )}
 
@@ -165,113 +171,103 @@ export function LeadForm({ initialData, onSuccess }: LeadFormProps) {
           <div className="hidden md:block" />
         </div>
 
-        <label className="mt-4 block text-sm text-slate-200">
-          <span className="mb-2 block">Ghi chú</span>
+        <label className="mt-5 block text-sm font-medium text-slate-700">
+          <span className="mb-1.5 block">Ghi chú</span>
           <textarea
             id="lead-notes"
             name="notes"
-            rows={5}
+            rows={4}
             value={values.notes}
             onChange={handleChange}
             placeholder="Phụ huynh muốn học thử cuối tuần, quan tâm robotics..."
-            className="w-full rounded-[24px] border border-white/10 bg-white/6 px-4 py-3.5 text-white outline-none transition duration-300 placeholder:text-slate-500 focus:border-fuchsia-300/45 focus:bg-fuchsia-300/8"
+            className="w-full rounded-md border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-red-500 focus:ring-1 focus:ring-red-500"
           />
         </label>
 
-        <div className="mt-6 flex flex-wrap gap-3">
+        <div className="mt-8 flex flex-wrap gap-3">
           <button
             id="lead-submit-button"
             type="submit"
             disabled={isPending}
-            className="rounded-full bg-gradient-to-r from-cyan-300 via-sky-400 to-fuchsia-400 px-6 py-3 text-sm font-semibold text-slate-950 shadow-[0_18px_34px_rgba(34,211,238,0.28)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_40px_rgba(34,211,238,0.38)] disabled:opacity-60 disabled:cursor-not-allowed"
+            className="inline-flex items-center justify-center rounded-md bg-red-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isPending ? "Đang lưu..." : "Lưu lead"}
+            {isPending ? "Đang lưu..." : "Lưu dữ liệu"}
           </button>
           <button
             id="lead-reset-button"
             type="button"
             onClick={() => {
-              setValues(initialValues);
+              setValues(defaultValues);
               setErrors({});
+              setShowSuccess(false);
             }}
-            className="rounded-full border border-white/12 bg-white/5 px-6 py-3 text-sm text-slate-100 transition duration-300 hover:border-white/28 hover:bg-white/10"
+            className="inline-flex items-center justify-center rounded-md border border-slate-300 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
           >
-            Reset form
+            Làm mới
           </button>
         </div>
       </form>
 
-      <aside className="space-y-4 rounded-[32px]">
-        <div className="glass-panel rounded-[28px] p-5 text-sm text-slate-100">
-          <p className="text-xs uppercase tracking-[0.22em] text-fuchsia-100/75">Why this feels premium</p>
-          <p className="mt-3 leading-7 text-slate-200">
-            Giao diện dùng khối tối sâu, lớp kính mờ, spacing thoáng và signal cards để form không còn là một khối nhập liệu phẳng mà trở thành một khu vực ra quyết định.
-          </p>
-        </div>
-
-        <div className="glass-panel rounded-[28px] p-5 text-sm text-slate-300">
-          <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Validation checklist</p>
-          <ul className="mt-4 space-y-3 leading-6">
-            <li>• Full name là bắt buộc</li>
-            <li>• Cần ít nhất phone hoặc email</li>
-            <li>• Email phải đúng format nếu có nhập</li>
-            <li>• Age group, program, campus, source là bắt buộc</li>
-            <li>• Score và team phụ trách được tính tự động</li>
+      <aside className="space-y-4">
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex items-center gap-2">
+            <Info className="h-4 w-4 text-slate-400" />
+            <h4 className="text-sm font-semibold text-slate-900">Thông tin form</h4>
+          </div>
+          <ul className="mt-3 space-y-2 text-sm text-slate-600">
+            <li>• <span className="font-medium">Họ và tên</span> là thông tin bắt buộc.</li>
+            <li>• Cần cung cấp ít nhất <span className="font-medium">Số điện thoại</span> hoặc <span className="font-medium">Email</span> để tạo hồ sơ.</li>
+            <li>• Phân bổ owner sẽ tự động tính ngay sau khi lưu.</li>
           </ul>
         </div>
 
-        <div className="glass-panel-strong rounded-[28px] p-5 text-sm text-cyan-50">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-xs uppercase tracking-[0.22em] text-cyan-100/75">Lead scoring preview</p>
-              <p className="mt-3 text-4xl font-semibold text-white">{scorePreview.score}/100</p>
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="mb-4 flex items-start justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-red-500" />
+              <h4 className="text-sm font-semibold text-slate-900">Xem trước điểm lead</h4>
             </div>
-            <div className="rounded-[20px] border border-white/10 bg-slate-950/45 px-3 py-2 text-right">
-              <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400">Assigned</p>
-              <p className="mt-1 text-sm text-cyan-100">{routingPreview.owner}</p>
+            <div className="text-right">
+              <span className="text-2xl font-bold text-slate-900">{scorePreview.score}</span>
+              <span className="text-sm text-slate-500">/100</span>
             </div>
           </div>
 
-          <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-white/10">
+          <div className="h-2 overflow-hidden rounded-full bg-slate-100">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-cyan-300 via-sky-400 to-fuchsia-400 transition-all duration-500"
+              className={`h-full rounded-full transition-all duration-500 ${scorePreview.score > 60 ? "bg-emerald-500" : scorePreview.score > 30 ? "bg-amber-500" : "bg-red-500"}`}
               style={{ width: `${scorePreview.score}%` }}
             />
           </div>
 
-          <div className="mt-4 rounded-[22px] border border-white/10 bg-slate-950/35 p-4 text-xs leading-6 text-cyan-50/90">
-            <div className="flex items-center justify-between gap-4">
-              <span className="uppercase tracking-[0.16em] text-cyan-100/70">Routing mode</span>
-              <span
-                className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${
-                  routingPreview.isPriority
-                    ? "border-amber-300/30 bg-amber-300/10 text-amber-100"
-                    : "border-cyan-300/30 bg-cyan-300/10 text-cyan-100"
-                }`}
-              >
-                {routingPreview.isPriority ? "Priority flow" : "Standard flow"}
-              </span>
+          <div className="mt-5 rounded-lg border border-slate-100 bg-slate-50 p-3 text-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500">Dự kiến giao cho</span>
+              <span className="font-medium text-slate-900">{routingPreview.owner}</span>
             </div>
-            <ul className="mt-3 space-y-2">
-              {routingPreview.reasons.map((reason) => (
-                <li key={reason}>• {reason}</li>
-              ))}
-            </ul>
+            <div className="mt-2 border-t border-slate-200 pt-2 text-xs text-slate-600">
+              <div className="mb-1 font-medium text-slate-700">
+                {routingPreview.isPriority ? "Luồng ưu tiên" : "Luồng tiêu chuẩn"}
+              </div>
+              <ul className="space-y-1">
+                {routingPreview.reasons.map((reason) => (
+                  <li key={reason}>• {reason}</li>
+                ))}
+              </ul>
+            </div>
           </div>
 
-          <div className="mt-4 space-y-3">
-            {scorePreview.scoreFactors.map((factor) => (
-              <div
-                key={factor.label}
-                className="flex items-center justify-between gap-4 rounded-[22px] border border-white/10 bg-white/5 px-4 py-3"
-              >
-                <span className="text-slate-200">{factor.label}</span>
-                <span className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-2.5 py-1 text-xs font-semibold text-cyan-100">
-                  +{factor.points}
-                </span>
-              </div>
-            ))}
-          </div>
+          {scorePreview.scoreFactors.length > 0 && (
+            <div className="mt-4 space-y-2">
+              <h5 className="text-xs font-medium uppercase tracking-wider text-slate-500">Chi tiết điểm cộng</h5>
+              {scorePreview.scoreFactors.map((factor) => (
+                <div key={factor.label} className="flex items-center justify-between text-sm">
+                  <span className="text-slate-600">{factor.label}</span>
+                  <span className="font-medium text-emerald-600">+{factor.points}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </aside>
     </section>
@@ -289,10 +285,10 @@ interface BaseFieldProps {
 
 function Field({ label, name, value, error, required = false, onChange, placeholder, type = "text" }: BaseFieldProps & { placeholder: string; type?: string }) {
   return (
-    <label className="text-sm text-slate-200">
-      <span className="mb-2 block">
+    <label className="text-sm font-medium text-slate-700">
+      <span className="mb-1.5 block">
         {label}
-        {required ? <span className="ml-1 text-rose-300">*</span> : null}
+        {required ? <span className="ml-1 text-red-500">*</span> : null}
       </span>
       <input
         id={`lead-${name}`}
@@ -303,23 +299,23 @@ function Field({ label, name, value, error, required = false, onChange, placehol
         placeholder={placeholder}
         aria-invalid={Boolean(error)}
         aria-describedby={error ? `lead-${name}-error` : undefined}
-        className={`w-full rounded-[24px] px-4 py-3.5 text-white outline-none transition duration-300 placeholder:text-slate-500 ${
+        className={`w-full rounded-md px-3.5 py-2.5 text-sm shadow-sm outline-none transition placeholder:text-slate-400 ${
           error
-            ? "border border-rose-300/60 bg-rose-500/10 focus:border-rose-300 focus:bg-rose-500/12"
-            : "border border-white/10 bg-white/6 focus:border-cyan-300/45 focus:bg-cyan-300/8"
+            ? "border border-red-300 text-red-900 focus:border-red-500 focus:ring-1 focus:ring-red-500"
+            : "border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-1 focus:ring-red-500"
         }`}
       />
-      {error ? <span id={`lead-${name}-error`} className="mt-2 block text-xs text-rose-300">{error}</span> : null}
+      {error ? <span id={`lead-${name}-error`} className="mt-1.5 block text-xs text-red-500">{error}</span> : null}
     </label>
   );
 }
 
 function SelectField({ label, name, value, error, required = false, onChange, options }: BaseFieldProps & { options: readonly string[] }) {
   return (
-    <label className="text-sm text-slate-200">
-      <span className="mb-2 block">
+    <label className="text-sm font-medium text-slate-700">
+      <span className="mb-1.5 block">
         {label}
-        {required ? <span className="ml-1 text-rose-300">*</span> : null}
+        {required ? <span className="ml-1 text-red-500">*</span> : null}
       </span>
       <select
         id={`lead-${name}`}
@@ -328,18 +324,18 @@ function SelectField({ label, name, value, error, required = false, onChange, op
         onChange={onChange}
         aria-invalid={Boolean(error)}
         aria-describedby={error ? `lead-${name}-error` : undefined}
-        className={`w-full rounded-[24px] px-4 py-3.5 text-white outline-none transition duration-300 ${
+        className={`w-full rounded-md bg-white px-3.5 py-2.5 text-sm shadow-sm outline-none transition ${
           error
-            ? "border border-rose-300/60 bg-rose-500/10 focus:border-rose-300 focus:bg-rose-500/12"
-            : "border border-white/10 bg-white/6 focus:border-cyan-300/45 focus:bg-cyan-300/8"
+            ? "border border-red-300 text-red-900 focus:border-red-500 focus:ring-1 focus:ring-red-500"
+            : "border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-1 focus:ring-red-500"
         }`}
       >
-        <option value="" className="bg-slate-950">Chọn...</option>
+        <option value="">Chọn...</option>
         {options.map((option) => (
-          <option key={option} value={option} className="bg-slate-950">{option}</option>
+          <option key={option} value={option}>{option}</option>
         ))}
       </select>
-      {error ? <span id={`lead-${name}-error`} className="mt-2 block text-xs text-rose-300">{error}</span> : null}
+      {error ? <span id={`lead-${name}-error`} className="mt-1.5 block text-xs text-red-500">{error}</span> : null}
     </label>
   );
 }

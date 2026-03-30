@@ -9,20 +9,12 @@ export default function MainLayout({
 }) {
   return (
     <LeadProvider>
-      <div className="relative min-h-screen overflow-hidden text-white">
-        <div className="pointer-events-none absolute inset-0">
-          <div className="absolute left-[-10%] top-[-5%] h-[26rem] w-[26rem] rounded-full bg-cyan-400/12 blur-3xl" />
-          <div className="absolute right-[-8%] top-[10%] h-[24rem] w-[24rem] rounded-full bg-fuchsia-500/12 blur-3xl" />
-          <div className="absolute bottom-[-8%] left-[28%] h-[22rem] w-[22rem] rounded-full bg-sky-400/10 blur-3xl" />
-        </div>
-
-        <div className="relative mx-auto grid min-h-screen max-w-[1620px] gap-5 px-4 py-4 lg:grid-cols-[330px_1fr] lg:px-6 lg:py-6">
-          <Sidebar />
-          <main className="space-y-5">
-            <Header />
-            <div className="glass-panel rounded-[34px] p-4 sm:p-6 lg:p-8">
-              {children}
-            </div>
+      <div className="flex min-h-dvh flex-col bg-slate-50 text-slate-900 font-sans lg:h-screen lg:flex-row lg:overflow-hidden">
+        <Sidebar />
+        <div className="flex flex-1 flex-col overflow-hidden">
+          <Header />
+          <main className="flex-1 overflow-y-auto bg-slate-50 p-4 sm:p-6 lg:p-8">
+            {children}
           </main>
         </div>
       </div>
