@@ -7,6 +7,7 @@ import { LeadForm } from "@/components/leads/LeadForm";
 import { useLeads } from "@/contexts/LeadContext";
 import { getLeadTemperature } from "@/utils/leadPriority";
 import { OWNER_OPTIONS } from "@/utils/routing";
+import { ArrowLeft, Edit2, Trash2, CheckCircle2, User, Activity, Clock } from "lucide-react";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -25,9 +26,9 @@ export default function LeadDetailPage({ params }: PageProps) {
   if (!lead) {
     return (
       <div className="flex min-h-[400px] flex-col items-center justify-center space-y-4 text-center">
-        <h3 className="text-2xl font-serif text-white">Không tìm thấy lead này</h3>
-        <p className="text-slate-400">Có thể lead đã bị xóa hoặc ID không đúng.</p>
-        <Link href="/leads" className="rounded-full bg-white px-6 py-2 text-sm font-semibold text-slate-950">
+        <h3 className="text-2xl font-semibold text-slate-900">Không tìm thấy lead này</h3>
+        <p className="text-slate-500">Có thể lead đã bị xóa hoặc ID không đúng.</p>
+        <Link href="/leads" className="inline-flex items-center justify-center rounded-md bg-slate-100 px-5 py-2.5 text-sm font-medium text-slate-900 transition hover:bg-slate-200">
           Về danh sách
         </Link>
       </div>
@@ -56,23 +57,23 @@ export default function LeadDetailPage({ params }: PageProps) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <Link href="/leads" className="flex items-center gap-2 text-sm text-slate-400 hover:text-cyan-300">
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
+        <Link href="/leads" className="group flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-slate-900">
+          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
           Quay lại danh sách
         </Link>
         <div className="flex gap-3">
           <button
             onClick={() => setIsEditing(!isEditing)}
-            className="rounded-full border border-white/10 bg-white/5 px-6 py-2 text-sm font-medium text-white hover:bg-white/10"
+            className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
           >
-            {isEditing ? "Hủy chỉnh sửa" : "Chỉnh sửa lead"}
+            <Edit2 className="h-4 w-4" />
+            {isEditing ? "Hủy chỉnh sửa" : "Chỉnh sửa"}
           </button>
           <button
             onClick={handleDelete}
-            className="rounded-full border border-rose-500/30 bg-rose-500/10 px-6 py-2 text-sm font-medium text-rose-400 hover:bg-rose-500/20"
+            className="inline-flex items-center gap-2 rounded-md border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 shadow-sm transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
           >
+            <Trash2 className="h-4 w-4" />
             Xóa lead
           </button>
         </div>
@@ -81,7 +82,7 @@ export default function LeadDetailPage({ params }: PageProps) {
       <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
         <div className="space-y-6">
           {isEditing ? (
-            <div className="rounded-[30px] border border-white/10 bg-slate-950/40 p-6 lg:p-8">
+            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
               <LeadForm
                 initialData={lead}
                 onSuccess={() => {
@@ -90,29 +91,32 @@ export default function LeadDetailPage({ params }: PageProps) {
               />
             </div>
           ) : (
-            <div className="rounded-[30px] border border-white/10 bg-slate-950/40 p-8 shadow-2xl">
+            <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
               <div className="flex items-center gap-6">
-                <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-cyan-400 to-fuchsia-500 text-4xl font-bold text-slate-950">
+                <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-red-100 text-3xl font-bold text-red-700">
                   {lead.fullName.charAt(0).toUpperCase()}
                 </div>
                 <div>
                   <div className="flex flex-wrap items-center gap-3">
-                    <h1 className="font-serif text-4xl text-white">{lead.fullName}</h1>
-                    <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${scoreTier.badgeClassName}`}>
-                      {scoreTier.label} lead
+                    <h1 className="text-3xl font-bold text-slate-900">{lead.fullName}</h1>
+                    <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700">
+                      Lead {scoreTier.label.toLowerCase()}
                     </span>
                   </div>
-                  <p className="mt-1 text-slate-400">{lead.email} • {lead.phone}</p>
+                  <p className="mt-1 flex items-center gap-2 text-sm text-slate-500">
+                    <User className="h-4 w-4" />
+                    {lead.email || "Không có email"} • {lead.phone}
+                  </p>
                   <div className="mt-3 flex flex-wrap items-center gap-3">
-                    <div className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-300">
-                      Owner: {lead.assignedTo}
+                    <div className="inline-flex items-center rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600">
+                      Phụ trách: {lead.assignedTo}
                     </div>
-                    <div className={`inline-flex items-center rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.18em] ${
+                    <div className={`inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-medium ${
                       isManualOwner
-                        ? "border-amber-300/30 bg-amber-300/10 text-amber-100"
-                        : "border-cyan-300/30 bg-cyan-300/10 text-cyan-100"
+                        ? "border-amber-200 bg-amber-50 text-amber-700"
+                        : "border-emerald-200 bg-emerald-50 text-emerald-700"
                     }`}>
-                      {isManualOwner ? "Manual override" : "Auto-routed"}
+                      {isManualOwner ? "Gán thủ công" : "Tự động phân bổ"}
                     </div>
                   </div>
                 </div>
@@ -120,56 +124,59 @@ export default function LeadDetailPage({ params }: PageProps) {
 
               <div className="mt-10 grid gap-8 sm:grid-cols-2">
                 <div>
-                  <h4 className="text-xs uppercase tracking-widest text-slate-500">Thông tin học tập</h4>
-                  <div className="mt-4 space-y-4">
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500">Thông tin học tập</h4>
+                  <div className="mt-4 space-y-5">
                     <div>
-                      <p className="text-sm text-slate-500">Chương trình quan tâm</p>
-                      <p className="text-lg text-white">{lead.programInterest}</p>
+                      <p className="text-sm font-medium text-slate-500">Chương trình quan tâm</p>
+                      <p className="mt-1 text-base text-slate-900">{lead.programInterest}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-slate-500">Cơ sở / Khu vực</p>
-                      <p className="text-lg text-white">{lead.campusOrRegion}</p>
+                      <p className="text-sm font-medium text-slate-500">Cơ sở / Khu vực</p>
+                      <p className="mt-1 text-base text-slate-900">{lead.campusOrRegion}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-slate-500">Nguồn lead</p>
-                      <p className="text-lg text-white">{lead.leadSource}</p>
+                      <p className="text-sm font-medium text-slate-500">Nguồn lead</p>
+                      <p className="mt-1 text-base text-slate-900">{lead.leadSource}</p>
                     </div>
                   </div>
                 </div>
                 <div>
-                  <h4 className="text-xs uppercase tracking-widest text-slate-500">Qualification</h4>
-                  <div className="mt-4 space-y-4">
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500">Đánh giá chất lượng</h4>
+                  <div className="mt-4 space-y-5">
                     <div>
-                      <p className="text-sm text-slate-500">Điểm tiềm năng (Score)</p>
-                      <p className="text-lg font-bold text-amber-300">★ {lead.score}</p>
+                      <p className="text-sm font-medium text-slate-500">Điểm tiềm năng (Score)</p>
+                      <div className="mt-1 flex items-center gap-1.5 text-base font-bold text-slate-900">
+                        <Activity className="h-4 w-4 text-emerald-500" />
+                        {lead.score} điểm
+                      </div>
                     </div>
                     <div>
-                      <p className="text-sm text-slate-500">Sale phụ trách</p>
-                      <p className="text-lg text-white">{lead.assignedTo}</p>
+                      <p className="text-sm font-medium text-slate-500">Sale phụ trách</p>
+                      <p className="mt-1 text-base text-slate-900">{lead.assignedTo}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-slate-500">Nhóm tuổi</p>
-                      <p className="text-lg text-white">{lead.ageGroup || "Chưa xác định"}</p>
+                      <p className="text-sm font-medium text-slate-500">Nhóm tuổi</p>
+                      <p className="mt-1 text-base text-slate-900">{lead.ageGroup || "Chưa xác định"}</p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-10 rounded-[28px] border border-white/10 bg-white/5 p-6">
+              <div className="mt-10 rounded-xl border border-slate-200 bg-slate-50 p-6">
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <h4 className="text-xs uppercase tracking-widest text-slate-500">Score breakdown</h4>
-                    <p className="mt-2 text-sm text-slate-400">Giải thích vì sao lead này được ưu tiên ở mức hiện tại.</p>
+                    <h4 className="text-sm font-semibold text-slate-900">Chi tiết điểm lead</h4>
+                    <p className="mt-1 text-sm text-slate-500">Chi tiết cộng điểm dựa trên thông tin thu thập được.</p>
                   </div>
-                  <div className="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 px-4 py-2 text-sm text-cyan-100">
-                    Total {lead.score}/100
+                  <div className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-bold text-slate-900 shadow-sm">
+                    Tổng: {lead.score}
                   </div>
                 </div>
-                <div className="mt-5 space-y-3">
+                <div className="mt-5 space-y-2">
                   {lead.scoreFactors.map((factor) => (
-                    <div key={factor.label} className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-950/35 px-4 py-3">
-                      <span className="text-slate-200">{factor.label}</span>
-                      <span className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1 text-xs font-semibold text-cyan-100">
+                    <div key={factor.label} className="flex items-center justify-between rounded-lg border border-slate-100 bg-white px-4 py-3 shadow-sm">
+                      <span className="text-sm text-slate-700">{factor.label}</span>
+                      <span className="inline-flex rounded-md bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700">
                         +{factor.points}
                       </span>
                     </div>
@@ -178,11 +185,13 @@ export default function LeadDetailPage({ params }: PageProps) {
               </div>
 
               {lead.notes && (
-                <div className="mt-10 border-t border-white/5 pt-10">
-                  <h4 className="text-xs uppercase tracking-widest text-slate-500">Ghi chú thêm</h4>
-                  <p className="mt-4 whitespace-pre-wrap italic leading-relaxed text-slate-300">
-                    &quot;{lead.notes}&quot;
-                  </p>
+                <div className="mt-10 border-t border-slate-100 pt-8">
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500">Ghi chú thêm</h4>
+                  <div className="mt-3 rounded-lg bg-yellow-50 p-4">
+                    <p className="whitespace-pre-wrap text-sm italic leading-relaxed text-yellow-800">
+                      &quot;{lead.notes}&quot;
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
@@ -190,40 +199,39 @@ export default function LeadDetailPage({ params }: PageProps) {
         </div>
 
         <div className="space-y-6">
-          <div className="rounded-[30px] border border-white/10 bg-slate-950/40 p-6 backdrop-blur">
-            <h4 className="text-sm font-semibold text-white">Chuyển trạng thái nhanh</h4>
-            <div className="mt-4 grid gap-2">
-              {statusOptions.map((option) => (
-                <button
-                  key={option.value}
-                  onClick={() =>
-                    startTransition(async () => {
-                      await updateLeadStatus(id, option.value);
-                    })
-                  }
-                  className={`flex items-center justify-between rounded-2xl border px-5 py-3 text-sm transition ${
-                    lead.status === option.value
-                      ? "border-cyan-300 bg-cyan-300/10 text-cyan-200"
-                      : "border-white/5 bg-white/5 text-slate-400 hover:border-white/10 hover:bg-white/10"
-                  }`}
-                >
-                  {option.label}
-                  {lead.status === option.value && (
-                    <svg className="h-4 w-4 text-cyan-300" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                  )}
-                </button>
-              ))}
+          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h4 className="text-sm font-semibold text-slate-900">Chuyển trạng thái nhanh</h4>
+            <div className="mt-4 grid gap-2.5">
+              {statusOptions.map((option) => {
+                const isActive = lead.status === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    onClick={() =>
+                      startTransition(async () => {
+                        await updateLeadStatus(id, option.value);
+                      })
+                    }
+                    className={`flex items-center justify-between rounded-md border px-4 py-3 text-sm font-medium transition-colors ${
+                      isActive
+                        ? "border-red-500 bg-red-50 text-red-700"
+                        : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                    }`}
+                  >
+                    {option.label}
+                    {isActive && <CheckCircle2 className="h-4 w-4 text-red-500" />}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          <div className="rounded-[30px] border border-white/10 bg-slate-950/40 p-6 backdrop-blur">
-            <div className="flex items-center justify-between gap-4">
+          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex items-start justify-between gap-4">
               <div>
-                <h4 className="text-sm font-semibold text-white">Owner routing</h4>
-                <p className="mt-2 text-xs leading-6 text-slate-400">
-                  Auto-routing theo score + source + campus. Có thể override thủ công khi owner cần takeover.
+                <h4 className="text-sm font-semibold text-slate-900">Phân bổ người phụ trách</h4>
+                <p className="mt-1 text-xs text-slate-500">
+                  Phân bổ dựa trên thuật toán điểm số và nguồn.
                 </p>
               </div>
               <button
@@ -231,22 +239,22 @@ export default function LeadDetailPage({ params }: PageProps) {
                   startTransition(async () => {
                     await updateLead(id, {
                       routingMode: isManualOwner ? "auto" : "manual",
-                      assignedTo: isManualOwner ? lead.assignedTo : ownerOptions[0],
+                      assignedTo: lead.assignedTo,
                     });
                   })
                 }
-                className={`rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] transition ${
+                className={`rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors ${
                   isManualOwner
-                    ? "border-amber-300/30 bg-amber-300/10 text-amber-100 hover:bg-amber-300/20"
-                    : "border-cyan-300/30 bg-cyan-300/10 text-cyan-100 hover:bg-cyan-300/20"
+                    ? "border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100"
+                    : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                 }`}
               >
-                {isManualOwner ? "Back to auto" : "Enable manual"}
+                {isManualOwner ? "Quay lại tự động" : "Bật chỉnh tay"}
               </button>
             </div>
 
-            <label htmlFor="lead-owner-select" className="mt-5 block text-xs uppercase tracking-[0.18em] text-slate-500">
-              Owner phụ trách
+            <label htmlFor="lead-owner-select" className="mt-5 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+              Sale phụ trách
             </label>
             <select
               id="lead-owner-select"
@@ -260,29 +268,29 @@ export default function LeadDetailPage({ params }: PageProps) {
                   });
                 })
               }
-              className="mt-3 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none transition focus:border-cyan-400 disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500"
             >
               {ownerOptions.map((owner) => (
-                <option key={owner} value={owner} className="bg-slate-950 text-white">
+                <option key={owner} value={owner}>
                   {owner}
                 </option>
               ))}
             </select>
 
-            <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs leading-6 text-slate-300">
+            <div className="mt-4 rounded-lg bg-slate-50 p-3 text-xs text-slate-600">
               <p>
-                <span className="font-semibold text-white">Current mode:</span> {isManualOwner ? "Manual override" : "Automatic routing"}
-              </p>
-              <p className="mt-1 text-slate-400">
-                Khi quay lại auto, owner sẽ được tính lại ngay từ routing engine mới.
+                <span className="font-semibold text-slate-900">Chế độ hiện tại:</span> {isManualOwner ? "Gán thủ công" : "Phân bổ tự động"}
               </p>
             </div>
           </div>
 
-          <div className="rounded-[30px] border border-cyan-500/20 bg-cyan-500/5 p-6">
-            <h4 className="text-sm font-semibold text-cyan-200">System Logs</h4>
-            <p className="mt-2 text-xs italic text-slate-500">
-              Đã tạo lúc: {new Date(lead.createdAt).toLocaleString("vi-VN")}
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-slate-500" />
+              <h4 className="text-sm font-semibold text-slate-900">Nhật ký hệ thống</h4>
+            </div>
+            <p className="mt-3 text-xs text-slate-600">
+              Tạo lúc: {new Date(lead.createdAt).toLocaleString("vi-VN")}
             </p>
           </div>
         </div>

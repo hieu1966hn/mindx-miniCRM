@@ -1,4 +1,5 @@
 import { login } from "@/app/actions/auth";
+import { Mail, Lock, LogIn, AlertCircle } from "lucide-react";
 
 interface LoginPageProps {
   searchParams: Promise<{ error?: string }>;
@@ -8,60 +9,40 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const { error } = await searchParams;
 
   return (
-    <div className="login-page">
-      {/* Background blobs */}
-      <div className="login-blob login-blob--cyan" />
-      <div className="login-blob login-blob--violet" />
-      <div className="login-blob login-blob--sky" />
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6 relative overflow-hidden">
+      {/* Subtle Background Elements */}
+      <div className="absolute top-0 right-0 -m-32 w-96 h-96 rounded-full bg-red-50/50 blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 left-0 -m-32 w-96 h-96 rounded-full bg-blue-50/50 blur-3xl pointer-events-none" />
 
-      <div className="login-card">
-        {/* Logo / Brand */}
-        <div className="login-brand">
-          <div className="login-logo">
-            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-              <path
-                d="M14 2L26 8V20L14 26L2 20V8L14 2Z"
-                stroke="url(#hexGrad)"
-                strokeWidth="2"
-                fill="rgba(56,189,248,0.12)"
-              />
-              <defs>
-                <linearGradient id="hexGrad" x1="2" y1="2" x2="26" y2="26">
-                  <stop stopColor="#38bdf8" />
-                  <stop offset="1" stopColor="#a855f7" />
-                </linearGradient>
-              </defs>
-            </svg>
+      <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-sm p-8 sm:p-10 relative z-10">
+        <div className="text-center mb-8">
+          <div className="mx-auto w-12 h-12 flex items-center justify-center bg-red-50 text-red-600 rounded-xl border border-red-100 mb-4 shadow-sm">
+            <span className="font-bold text-xl">M</span>
           </div>
-          <h1 className="login-title">MindX Mini CRM</h1>
-          <p className="login-subtitle">Đăng nhập để quản lý leads</p>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">MindX Mini CRM</h1>
+          <p className="text-sm text-slate-500 mt-2">Đăng nhập để quản lý pipeline</p>
         </div>
 
-        {/* Error message */}
         {error && (
-          <div className="login-error" role="alert">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="8" x2="12" y2="12" />
-              <line x1="12" y1="16" x2="12.01" y2="16" />
-            </svg>
-            {error === "Invalid login credentials"
-              ? "Email hoặc mật khẩu không đúng"
-              : error}
+          <div className="mb-6 flex items-start gap-3 p-4 text-sm text-red-800 rounded-lg bg-red-50 border border-red-200">
+            <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+            <p>
+              {error === "Invalid login credentials"
+                ? "Email hoặc mật khẩu không đúng. Vui lòng thử lại."
+                : error}
+            </p>
           </div>
         )}
 
-        {/* Form */}
-        <form action={login} className="login-form">
-          <div className="login-field">
-            <label htmlFor="email" className="login-label">
+        <form action={login} className="space-y-6">
+          <div className="space-y-2">
+            <label htmlFor="email" className="block text-sm font-medium text-slate-700">
               Email
             </label>
-            <div className="login-input-wrapper">
-              <svg className="login-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                <polyline points="22,6 12,13 2,6" />
-              </svg>
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3">
+                <Mail className="w-5 h-5 text-slate-400" />
+              </span>
               <input
                 id="email"
                 name="email"
@@ -69,20 +50,19 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                 autoComplete="email"
                 required
                 placeholder="admin@mindx.edu.vn"
-                className="login-input"
+                className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-shadow"
               />
             </div>
           </div>
 
-          <div className="login-field">
-            <label htmlFor="password" className="login-label">
+          <div className="space-y-2">
+            <label htmlFor="password" className="block text-sm font-medium text-slate-700">
               Mật khẩu
             </label>
-            <div className="login-input-wrapper">
-              <svg className="login-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-              </svg>
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3">
+                <Lock className="w-5 h-5 text-slate-400" />
+              </span>
               <input
                 id="password"
                 name="password"
@@ -90,23 +70,25 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                 autoComplete="current-password"
                 required
                 placeholder="••••••••"
-                className="login-input"
+                className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-shadow"
               />
             </div>
           </div>
 
-          <button type="submit" className="login-btn">
-            <span>Đăng nhập</span>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M5 12h14M12 5l7 7-7 7" />
-            </svg>
+          <button
+            type="submit"
+            className="w-full flex justify-center items-center gap-2 py-2.5 px-4 mt-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-semibold transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500/50"
+          >
+            Đăng nhập
+            <LogIn className="w-4 h-4" />
           </button>
         </form>
 
-        <p className="login-footer">
-          Tài khoản được quản trị viên cấp phát.
+        <p className="mt-8 text-center text-xs text-slate-500 font-medium">
+          Hệ thống nội bộ. Tài khoản được cấp phát bởi quản trị viên.
         </p>
       </div>
     </div>
   );
 }
+
